@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
+/* 1. MOTYW JASNY (Light) */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  
+  /* Teksty */
+  --text-primary: #1e293b;   
+  --text-secondary: #334155; 
+  --text-muted: #94a3b8;     
+  --text-inverse: #ffffff;   
+
+  /* AKCENT (Twój Signature Orange) */
+  /* Tutaj możesz zmienić odcień na dowolny inny! */
+  --accent: #f97316;         /* Odpowiada orange-500 */
+  --accent-light: #ffedd5;   /* Odpowiada orange-100 (tła podświetleń) */
+  --accent-strong: #ea580c;  /* Odpowiada orange-600 (hover) */
+
+  /* Tła i Obramowania */
+  --bg-surface: #ffffff;     
+  --bg-subtle: #f1f5f9;      
+  --bg-inverse: #0f172a;     
+  --border-dim: #e2e8f0;     
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* 2. MOTYW CIEMNY (Dark) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #020618;   /* Twój wybrany Ciemny Granat */
+
+    /* Teksty */
+    --text-primary: #ac8a1b;   
+    --text-secondary: #e2e8f0; 
+    --text-muted: #64748b;     
+    --text-inverse: #000000;   
+
+    /* AKCENT W TRYBIE CIEMNYM */
+    /* Możesz tu ustawić np. Złoty, jeśli wolisz monokolor, albo zostawić Orange */
+    --accent: #f97316;         
+    --accent-light: #431407;   /* Ciemniejszy orange (orange-950) dla tła w nocy */
+    --accent-strong: #fb923c;  /* Jaśniejszy orange (orange-400) dla lepszej widoczności */
+
+    /* Tła i Obramowania */
+    --bg-surface: #0f172a;     /* Ciemniejszy granat dla paneli */
+    --bg-subtle: #1e293b;      
+    --bg-inverse: #e2e8f0;     
+    --border-dim: #1e293b;     
   }
+}
+
+/* 3. Konfiguracja Tailwind v4 */
+@theme inline {
+  --color-background: var(--background);
+  
+  /* Mapowanie kolorów semantycznych */
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-inverse: var(--text-inverse);
+  
+  /* Mapowanie AKCENTU */
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-strong: var(--accent-strong);
+  
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-bg-inverse: var(--bg-inverse);
+  --color-border-dim: var(--border-dim);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-biblical: var(--font-biblical); 
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
 }

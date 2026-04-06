@@ -1,0 +1,102 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PrivacyLevel {
+  PRIVATE
+  CLOSE_FRIENDS
+  ALL_FRIENDS
+}
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum FriendLevel {
+  REGULAR
+  CLOSE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   // If using email/pass, otherwise handled by OAuth
+  name          String?
+  bio           String?
+  avatarUrl     String?
+  favoriteVerse String?
+  
+  // Preferences
+  theme         String    @default("system") // light, dark, system
+  language      String    @default("en")     // en, pl
+  bibleVersion  String    @default("KJV")    // KJV, UBG, etc.
+  
+  // Relations
+  thoughts      Thought[]
+  savedThoughts SavedThought[]
+  
+  // Friendship logic (Self-referential many-to-many)
+  sentRequests     Friendship[] @relation("Sender")
+  receivedRequests Friendship[] @relation("Receiver")
+
+  createdAt     DateTime  @default(now())
+}
+
+model Friendship {
+  id          String       @id @default(cuid())
+  senderId    String
+  receiverId  String
+  sender      User         @relation("Sender", fields: [senderId], references: [id])
+  receiver    User         @relation("Receiver", fields: [receiverId], references: [id])
+  
+  status      FriendStatus @default(PENDING)
+  level       FriendLevel  @default(REGULAR) // Defaults to regular, can be upgraded to close
+
+  @@unique([senderId, receiverId])
+}
+
+model Thought {
+  id           String       @id @default(cuid())
+  content      String       @db.Text
+  
+  // Bible Reference
+  bookId       String       // e.g., "GEN" or "JHN"
+  chapter      Int
+  verse        Int?         // Null means it's a thought for the whole chapter
+  
+  // Organization
+  tags         String[]
+  isFavorite   Boolean      @default(false)
+  privacy      PrivacyLevel @default(PRIVATE)
+  
+  authorId     String
+  author       User         @relation(fields: [authorId], references: [id])
+  
+  savedBy      SavedThought[]
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model SavedThought {
+  id           String   @id @default(cuid())
+  userId       String
+  thoughtId    String
+  user         User     @relation(fields: [userId], references: [id])
+  thought      Thought  @relation(fields: [thoughtId], references: [id])
+  
+  personalNote String?  @db.Text // "Optional personal notes" requirement
+
+  createdAt    DateTime @default(now())
+  
+  @@unique([userId, thoughtId])
+}
