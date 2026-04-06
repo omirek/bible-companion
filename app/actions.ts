@@ -3,11 +3,13 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-
-const TEST_USER_EMAIL = "test@example.com";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 async function getUser() {
-  return await prisma.user.findUnique({ where: { email: TEST_USER_EMAIL } });
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) throw new Error("Not authenticated");
+  return await prisma.user.findUnique({ where: { email: session.user.email } });
 }
 
 // 1. ZAPISYWANIE (INTELIGENTNE)
@@ -79,4 +81,107 @@ export async function getChapterThoughts(bookId: string, chapter: number) {
       chapter: chapter
     }
   });
+}
+
+// Friendship actions
+export async function sendFriendRequest(receiverEmail: string) {
+  const user = await getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const receiver = await prisma.user.findUnique({ where: { email: receiverEmail } });
+  if (!receiver) throw new Error("User not found");
+
+  if (user.id === receiver.id) throw new Error("Cannot send request to yourself");
+
+  // Check if request already exists
+  const existing = await prisma.friendship.findFirst({
+    where: {
+      OR: [
+        { senderId: user.id, receiverId: receiver.id },
+        { senderId: receiver.id, receiverId: user.id }
+      ]
+    }
+  });
+
+  if (existing) throw new Error("Friendship request already exists");
+
+  await prisma.friendship.create({
+    data: {
+      senderId: user.id,
+      receiverId: receiver.id,
+      status: "PENDING"
+    }
+  });
+
+  revalidatePath("/community");
+}
+
+export async function acceptFriendRequest(senderId: string) {
+  const user = await getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await prisma.friendship.updateMany({
+    where: {
+      senderId,
+      receiverId: user.id,
+      status: "PENDING"
+    },
+    data: { status: "ACCEPTED" }
+  });
+
+  revalidatePath("/community");
+}
+
+export async function declineFriendRequest(senderId: string) {
+  const user = await getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await prisma.friendship.deleteMany({
+    where: {
+      senderId,
+      receiverId: user.id,
+      status: "PENDING"
+    }
+  });
+
+  revalidatePath("/community");
+}
+
+export async function setFriendLevel(friendId: string, level: "REGULAR" | "CLOSE") {
+  const user = await getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await prisma.friendship.updateMany({
+    where: {
+      OR: [
+        { senderId: user.id, receiverId: friendId },
+        { senderId: friendId, receiverId: user.id }
+      ],
+      status: "ACCEPTED"
+    },
+    data: { level }
+  });
+
+  revalidatePath("/community");
+}
+
+export async function getFriends() {
+  const user = await getUser();
+  if (!user) return { friends: [], pendingSent: [], pendingReceived: [] };
+
+  const sentRequests = await prisma.friendship.findMany({
+    where: { senderId: user.id },
+    include: { receiver: true }
+  });
+
+  const receivedRequests = await prisma.friendship.findMany({
+    where: { receiverId: user.id },
+    include: { sender: true }
+  });
+
+  const friends = receivedRequests.filter(r => r.status === "ACCEPTED").map(r => ({ ...r.sender, level: r.level }));
+  const pendingSent = sentRequests.filter(r => r.status === "PENDING").map(r => r.receiver);
+  const pendingReceived = receivedRequests.filter(r => r.status === "PENDING").map(r => r.sender);
+
+  return { friends, pendingSent, pendingReceived };
 }

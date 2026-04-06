@@ -4,13 +4,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 // ZMIANA: Importujemy usePreferences zamiast useLanguage
-import { usePreferences } from "@/context/PreferencesContext"; 
+import { usePreferences } from "@/context/PreferencesContext";
+import { useSession, signIn, signOut } from "next-auth/react"; 
 
 export default function Sidebar() {
   const pathname = usePathname();
   
   // ZMIANA: Pobieramy dane z nowego kontekstu
   const { t, language, setLanguage } = usePreferences();
+  const { data: session, status } = useSession();
 
   const navItems = [
     { name: t("library"), href: "/", icon: "📖" },
@@ -44,6 +46,41 @@ export default function Sidebar() {
             );
           })}
         </nav>
+      </div>
+
+      {/* User Section */}
+      <div className="mb-4">
+        {status === "loading" ? (
+          <div className="text-center text-slate-500">Loading...</div>
+        ) : session ? (
+          <div className="flex items-center gap-3 p-3 bg-slate-200 dark:bg-slate-800 rounded-lg">
+            <img
+              src={session.user?.image || "/default-avatar.png"}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                {session.user?.name}
+              </p>
+              <p className="text-xs text-slate-500 truncate">{session.user?.email}</p>
+            </div>
+            <button
+              onClick={() => signOut()}
+              className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => signIn("google")}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            <span>🔑</span>
+            Sign In with Google
+          </button>
+        )}
       </div>
 
       {/* Przełącznik Języka na dole paska */}

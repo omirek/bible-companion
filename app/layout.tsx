@@ -5,6 +5,7 @@ import { Inter, Merriweather, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { PreferencesProvider } from "@/context/PreferencesContext";
+import AuthProvider from "@/components/AuthProvider";
 
 const inter = Inter({ 
   subsets: ["latin"], 
@@ -38,14 +39,16 @@ export default function RootLayout({
     <html lang="en">
       {/* Dodajemy frank.variable */}
       <body className={`${inter.variable} ${merriweather.variable} ${frank.variable} font-sans antialiased`}>
-        <PreferencesProvider>
-          <div className="flex min-h-screen bg-background text-primary">
-            <Sidebar />
-            <main className="flex-1 md:ml-64 p-4 md:p-8">
-              {children}
-            </main>
-          </div>
-        </PreferencesProvider>
+        <AuthProvider>
+          <PreferencesProvider>
+            <div className="flex min-h-screen bg-background text-primary">
+              <Sidebar />
+              <main className="flex-1 md:ml-64 p-4 md:p-8">
+                {children}
+              </main>
+            </div>
+          </PreferencesProvider>
+        </AuthProvider>
       </body>
     </html>
   );
