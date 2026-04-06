@@ -39,9 +39,9 @@ export default function CommunityPage() {
       await sendFriendRequest(email);
       setEmail("");
       loadFriends();
-    } catch (error) {
-      alert(error.message);
-    }
+    } catch (error: any) {
+  alert(error.message || "Wystąpił nieoczekiwany błąd");
+}
   };
 
   const handleAccept = async (senderId: string) => {
