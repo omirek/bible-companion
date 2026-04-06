@@ -7,7 +7,7 @@ import { usePreferences } from "@/context/PreferencesContext";
 
 interface User {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   level?: string;
 }
